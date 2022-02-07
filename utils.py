@@ -1,9 +1,7 @@
 import numpy as np
 
 
-def softmax(Qs, beta):
-
-    Qs_val = np.array(list(Qs.values()))
-    num = np.exp(Qs_val * beta)
-    den = np.exp(Qs_val * beta).sum()
+def softmax(Qs_val):
+    num = np.exp(Qs_val)
+    den = np.exp(Qs_val).sum()
     return num / den
