@@ -85,12 +85,12 @@ class ML(object):
                            method=self.optimization_method, bounds=bounds)
             return res
         elif self.model_type == 'RW+noise+bias':
-            bounds = [(0, 1), (0, 10), (0, 1), (0, 10)]
+            bounds = [(0, 1), (0, 10), (0, 1), (-10, 10)]
             res = minimize(self.neg_log_likelihood, [0.1, 0.1, 0.1, 0.1],
                            method=self.optimization_method, bounds=bounds)
             return res
         elif self.model_type == 'RW+noise+bias+Pav':
-            bounds = [(0, 1), (0, 10), (0, 1), (0, 10), (-0.00001, 10)]
+            bounds = [(0, 1), (0, 10), (0, 1), (-10, 10), (-0.00001, 10)]
             res = minimize(self.neg_log_likelihood, [0.1, 0.1, 0.1, 0.1, 0.1],
                            method=self.optimization_method, bounds=bounds)
             return res
