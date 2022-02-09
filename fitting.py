@@ -1,5 +1,6 @@
 
 
+from statistics import mode
 import numpy as np
 import pandas as pd
 from utils import softmax
@@ -9,25 +10,37 @@ import matplotlib.pyplot as plt
 
 
 class ML(object):
-    def __init__(self, df):
+    def __init__(self, df, optimization_method='Nelder-Mead', model_type='RW'):
         """
             df must contains "stimulus", "action", "reward"
         """
 
         self.df = df
-
-        self.n_actions = len(df['action'].unique())
+        self.actions = list(df['action'].unique())
+        self.n_actions = len(self.actions)
         self.stims = list(df['stimulus'].unique())
         self.n_stims = list(self.stims)
+
+        self.optimization_method = optimization_method
+        self.model_type = model_type
 
     def neg_log_likelihood(self, params):
 
         df = self.df
-        alpha = params[0]
-        beta = params[1]
-        bias = params[2]
-        pav = params[3]
-        noise = params[4]
+        alpha = params[0]  # learning rate
+        beta = params[1]  # sensitivity to reward
+        noise = 0
+        bias = 0
+        pav = 0
+        if self.model_type == 'RW+noise':
+            noise = params[2]  # noise
+        elif self.model_type == 'RW+noise+bias':
+            noise = params[2]  # noise
+            bias = params[3]  # go bias
+        elif self.model_type == 'RW+noise+bias+Pav':
+            noise = params[2]  # noise
+            bias = params[3]  # go bias
+            pav = params[4]  # Pavlovian bias
 
         actions, rewards, stimuli = df['action'].values, df['reward'].values, df['stimulus'].values
 
@@ -36,7 +49,7 @@ class ML(object):
         for stim in self.stims:
             V[stim] = 0
             Q[stim] = {}
-            for act in range(self.n_actions):
+            for act in self.actions:
                 Q[stim][act] = 0
 
         prob_log = 0
@@ -58,3 +71,29 @@ class ML(object):
             V[stimulus] = V[stimulus] + alpha * error_V
 
         return -prob_log
+
+    def fit_model(self):
+
+        if self.model_type == 'RW':
+            bounds = [(0, 1), (0, 10)]
+            res = minimize(self.neg_log_likelihood, [0.1, 0.1],
+                           method=self.optimization_method, bounds=bounds)
+            return res
+        elif self.model_type == 'RW+noise':
+            bounds = [(0, 1), (0, 10), (0, 1)]
+            res = minimize(self.neg_log_likelihood, [0.1, 0.1, 0.1],
+                           method=self.optimization_method, bounds=bounds)
+            return res
+        elif self.model_type == 'RW+noise+bias':
+            bounds = [(0, 1), (0, 10), (0, 1), (0, 10)]
+            res = minimize(self.neg_log_likelihood, [0.1, 0.1, 0.1, 0.1],
+                           method=self.optimization_method, bounds=bounds)
+            return res
+        elif self.model_type == 'RW+noise+bias+Pav':
+            bounds = [(0, 1), (0, 10), (0, 1), (0, 10), (-0.00001, 10)]
+            res = minimize(self.neg_log_likelihood, [0.1, 0.1, 0.1, 0.1, 0.1],
+                           method=self.optimization_method, bounds=bounds)
+            return res
+        else:
+            raise ValueError(
+                'model_type must be "RW" or "RW+noise" or "RW+noise+bias" or "RW+noise+bias+Pav"')
