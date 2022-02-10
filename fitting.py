@@ -35,7 +35,7 @@ class ML(object):
         if self.model_type == 'RW+noise':
             noise = params[2]  # noise
         elif self.model_type == 'RW+noise+bias':
-            noise = params[2]  # noise
+            noise = params[2]   # noise
             bias = params[3]  # go bias
         elif self.model_type == 'RW+noise+bias+Pav':
             noise = params[2]  # noise
@@ -75,23 +75,32 @@ class ML(object):
     def fit_model(self):
 
         if self.model_type == 'RW':
-            bounds = [(0, 1), (0, 10)]
-            res = minimize(self.neg_log_likelihood, [0.1, 0.1],
+            bounds = [(0, 1), (0, None)]
+            x0 = 0.1*(np.random.normal(0, 1, 2))
+            res = minimize(self.neg_log_likelihood, x0,
                            method=self.optimization_method, bounds=bounds)
             return res
+
         elif self.model_type == 'RW+noise':
-            bounds = [(0, 1), (0, 10), (0, 1)]
-            res = minimize(self.neg_log_likelihood, [0.1, 0.1, 0.1],
+            bounds = [(0, 1), (0, None), (0, 1)]
+            x0 = 0.1*(np.random.normal(0, 1, 3))
+
+            res = minimize(self.neg_log_likelihood, x0,
                            method=self.optimization_method, bounds=bounds)
             return res
+
         elif self.model_type == 'RW+noise+bias':
-            bounds = [(0, 1), (0, 10), (0, 1), (-10, 10)]
-            res = minimize(self.neg_log_likelihood, [0.1, 0.1, 0.1, 0.1],
+            bounds = [(0, 1), (0, None), (0, 1), (0, None)]
+            x0 = 0.1*(np.random.normal(0, 1, 4))
+
+            res = minimize(self.neg_log_likelihood, x0,
                            method=self.optimization_method, bounds=bounds)
             return res
+
         elif self.model_type == 'RW+noise+bias+Pav':
-            bounds = [(0, 1), (0, 10), (0, 1), (-10, 10), (-0.00001, 10)]
-            res = minimize(self.neg_log_likelihood, [0.1, 0.1, 0.1, 0.1, 0.1],
+            bounds = [(0, 1), (0, None), (0, 1), (0, None), (0, None)]
+            x0 = 0.1*(np.random.normal(0, 1, 5))
+            res = minimize(self.neg_log_likelihood, x0,
                            method=self.optimization_method, bounds=bounds)
             return res
         else:
