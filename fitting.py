@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 
 class ML(object):
-    def __init__(self, df, optimization_method='Nelder-Mead', model_type='RW'):
+    def __init__(self, df, optimization_method='Nelder-Mead', model_type='RW', initial_guess=None, without_bound=True):
         """
             df must contains "stimulus", "action", "reward"
         """
@@ -20,6 +20,8 @@ class ML(object):
         self.n_actions = len(self.actions)
         self.stims = list(df['stimulus'].unique())
         self.n_stims = list(self.stims)
+        self.initial_guess = initial_guess
+        self.without_bound = without_bound
 
         self.optimization_method = optimization_method
         self.model_type = model_type
@@ -27,20 +29,35 @@ class ML(object):
     def neg_log_likelihood(self, params):
 
         df = self.df
-        alpha = params[0]  # learning rate
-        beta = params[1]  # sensitivity to reward
+        if (self.without_bound):
+            alpha = 1/(1+np.exp(-params[0]))  # learning rate
+            beta = np.exp(params[1])  # sensitivity to reward
+        else:
+            alpha = params[0]  # learning rate
+            beta = params[1]  # sensitivity to reward
+
         noise = 0
         bias = 0
         pav = 0
         if self.model_type == 'RW+noise':
-            noise = params[2]  # noise
+            if(self.without_bound):
+                noise = 1/(1+np.exp(-params[2]))
+            else:
+                noise = params[2]  # noise
         elif self.model_type == 'RW+noise+bias':
-            noise = params[2]   # noise
+            if(self.without_bound):
+                noise = 1/(1+np.exp(-params[2]))
+            else:
+                noise = params[2]  # noise
             bias = params[3]  # go bias
         elif self.model_type == 'RW+noise+bias+Pav':
-            noise = params[2]  # noise
+            if(self.without_bound):
+                noise = 1/(1+np.exp(-params[2]))
+                pav = np.exp(params[4])
+            else:
+                noise = params[2]  # noise
+                pav = params[4]  # Pavlovian bias
             bias = params[3]  # go bias
-            pav = params[4]  # Pavlovian bias
 
         actions, rewards, stimuli = df['action'].values, df['reward'].values, df['stimulus'].values
 
@@ -76,32 +93,64 @@ class ML(object):
 
         if self.model_type == 'RW':
             bounds = [(0, 1), (0, None)]
-            x0 = 0.1*(np.random.normal(0, 1, 2))
-            res = minimize(self.neg_log_likelihood, x0,
-                           method=self.optimization_method, bounds=bounds)
+            x0 = self.initial_guess
+            if(self.without_bound):
+                res = minimize(self.neg_log_likelihood, x0,
+                               method=self.optimization_method,
+                               # bounds=bounds
+                               )
+            else:
+                res = minimize(self.neg_log_likelihood, x0,
+                               method=self.optimization_method,
+                               bounds=bounds
+                               )
             return res
 
         elif self.model_type == 'RW+noise':
             bounds = [(0, 1), (0, None), (0, 1)]
-            x0 = 0.1*(np.random.normal(0, 1, 3))
+            x0 = self.initial_guess
 
-            res = minimize(self.neg_log_likelihood, x0,
-                           method=self.optimization_method, bounds=bounds)
+            if(self.without_bound):
+                res = minimize(self.neg_log_likelihood, x0,
+                               method=self.optimization_method,
+                               # bounds=bounds
+                               )
+            else:
+                res = minimize(self.neg_log_likelihood, x0,
+                               method=self.optimization_method,
+                               bounds=bounds
+                               )
             return res
 
         elif self.model_type == 'RW+noise+bias':
-            bounds = [(0, 1), (0, None), (0, 1), (0, None)]
-            x0 = 0.1*(np.random.normal(0, 1, 4))
+            bounds = [(0, 1), (0, None), (0, 1), (None, None)]
+            x0 = self.initial_guess
 
-            res = minimize(self.neg_log_likelihood, x0,
-                           method=self.optimization_method, bounds=bounds)
+            if(self.without_bound):
+                res = minimize(self.neg_log_likelihood, x0,
+                               method=self.optimization_method,
+                               # bounds=bounds
+                               )
+            else:
+                res = minimize(self.neg_log_likelihood, x0,
+                               method=self.optimization_method,
+                               bounds=bounds
+                               )
             return res
 
         elif self.model_type == 'RW+noise+bias+Pav':
-            bounds = [(0, 1), (0, None), (0, 1), (0, None), (0, None)]
-            x0 = 0.1*(np.random.normal(0, 1, 5))
-            res = minimize(self.neg_log_likelihood, x0,
-                           method=self.optimization_method, bounds=bounds)
+            bounds = [(0, 1), (0, None), (0, 1), (None, None), (0, None)]
+            x0 = self.initial_guess
+            if(self.without_bound):
+                res = minimize(self.neg_log_likelihood, x0,
+                               method=self.optimization_method,
+                               # bounds=bounds
+                               )
+            else:
+                res = minimize(self.neg_log_likelihood, x0,
+                               method=self.optimization_method,
+                               bounds=bounds
+                               )
             return res
         else:
             raise ValueError(
