@@ -147,11 +147,11 @@ class Agent(object):
             self.log['Q(nogo)'].append(self.get_Q(context, 'nogo'))
 
 
-def run_experiment(bandit, n_runs, params={}) -> pd.DataFrame:
+def run_experiment(bandit, n_runs, params={}, beta2 = False) -> pd.DataFrame:
     # print('Running a go-nogo experiment simulation with params = {}'.format(params))
 
     # init agent
-    agent = Agent(bandit, params=params)
+    agent = Agent(bandit, params=params, beta2=beta2)
 
     for _ in range(n_runs):
         agent.run()
