@@ -58,15 +58,21 @@ class Bandit(object):
 
 
 class Agent(object):
-    def __init__(self, bandit, params={}):
+    def __init__(self, bandit, params={}, beta2=False):
         self.Q = {}
         self.V = {}
         self.bandit = bandit
         self.params = params
+        self.beta2 = beta2
 
         try:
             self.alpha = params['alpha']
-            self.beta = params['beta']
+            if(beta2):
+                self.beta_rew = params['beta_rew']
+                self.beta_pun = params['beta_pun']
+
+            else:
+                self.beta = params['beta']
             self.Pav = params['Pav']
             self.noise = params['noise']
             self.bias = params['bias']
@@ -102,7 +108,14 @@ class Agent(object):
         return action, p_go
 
     def update_action_value(self, context, action, reward):
-        error_Q = self.beta*reward - self.get_Q(context, action)
+        if(self.beta2):
+            if ('win' in context):
+                error_Q = self.beta_rew*reward - self.get_Q(context, action)
+
+            elif('avoidPun' in context):
+                error_Q = self.beta_pun*reward - self.get_Q(context, action)
+        else:
+            error_Q = self.beta*reward - self.get_Q(context, action)
         self.Q[context][action] = self.Q[context][action] + \
             self.alpha * error_Q
 
@@ -135,7 +148,7 @@ class Agent(object):
 
 
 def run_experiment(bandit, n_runs, params={}) -> pd.DataFrame:
-    print('Running a go-nogo experiment simulation with params = {}'.format(params))
+    # print('Running a go-nogo experiment simulation with params = {}'.format(params))
 
     # init agent
     agent = Agent(bandit, params=params)
