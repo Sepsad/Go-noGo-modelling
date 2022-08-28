@@ -111,15 +111,17 @@ class Agent(object):
         if(self.beta2):
             if ('win' in context):
                 error_Q = self.beta_rew*reward - self.get_Q(context, action)
+                error_V = self.beta_rew*reward - self.get_V(context)
 
             elif('avoidPun' in context):
                 error_Q = self.beta_pun*reward - self.get_Q(context, action)
+                error_V = self.beta_pun*reward - self.get_V(context)
         else:
             error_Q = self.beta*reward - self.get_Q(context, action)
+            error_V = self.beta*reward - self.get_V(context)
+
         self.Q[context][action] = self.Q[context][action] + \
             self.alpha * error_Q
-
-        error_V = self.beta*reward - self.get_V(context)
         self.V[context] = self.V[context] + self.alpha * error_V
 
     def get_Q(self, context, action):
@@ -147,7 +149,7 @@ class Agent(object):
             self.log['Q(nogo)'].append(self.get_Q(context, 'nogo'))
 
 
-def run_experiment(bandit, n_runs, params={}, beta2 = False) -> pd.DataFrame:
+def run_experiment(bandit, n_runs, params={}, beta2=False) -> pd.DataFrame:
     # print('Running a go-nogo experiment simulation with params = {}'.format(params))
 
     # init agent
